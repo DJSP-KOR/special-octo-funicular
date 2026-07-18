@@ -1,0 +1,36 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Source {
+  NAVER
+  REUTERS
+}
+
+model Keyword {
+  id        String    @id @default(cuid())
+  text      String    @unique
+  createdAt DateTime  @default(now())
+  articles  Article[]
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  source      Source
+  title       String
+  url         String   @unique
+  description String?
+  publishedAt DateTime
+  fetchedAt   DateTime @default(now())
+  keywords    Keyword[]
+
+  @@index([publishedAt])
+}
