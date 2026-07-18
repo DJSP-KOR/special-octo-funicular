@@ -172,14 +172,7 @@ export default function Home() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
-      <header className="relative flex flex-col items-center gap-1 text-center">
-        <button
-          onClick={handleSync}
-          disabled={syncing}
-          className="absolute right-0 top-0 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {syncing ? "업데이트 중..." : "업데이트"}
-        </button>
+      <header className="relative flex flex-col items-center gap-3 text-center sm:gap-1">
         <h1 className="text-2xl font-semibold">SP의 주식 뉴스 키워드 대시보드</h1>
         <p className="text-sm text-gray-500">
           네이버 뉴스를 키워드별로 분류합니다.
@@ -187,6 +180,13 @@ export default function Home() {
             <> 마지막 업데이트: {new Date(lastSyncedAt).toLocaleString("ko-KR")}</>
           )}
         </p>
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 sm:absolute sm:right-0 sm:top-0"
+        >
+          {syncing ? "업데이트 중..." : "업데이트"}
+        </button>
       </header>
 
       {error && (
