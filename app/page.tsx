@@ -195,17 +195,33 @@ export default function Home() {
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
       )}
 
-      <section className="flex flex-col gap-3">
-        <form onSubmit={handleAddKeyword} className="flex gap-2">
+      <section className="flex flex-col items-center gap-3">
+        <form
+          onSubmit={handleAddKeyword}
+          className="flex w-full max-w-xl items-center gap-2 rounded-full border border-gray-300 bg-white px-5 py-3 shadow-sm transition-shadow focus-within:shadow-md hover:shadow-md"
+        >
+          <svg
+            className="h-5 w-5 flex-none text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
+            />
+          </svg>
           <input
             value={newKeyword}
             onChange={(e) => setNewKeyword(e.target.value)}
             placeholder="새 키워드 입력 (예: 반도체)"
-            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="flex-1 bg-transparent text-base outline-none placeholder:text-gray-400"
           />
           <button
             type="submit"
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+            className="flex-none rounded-full bg-gray-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-gray-700"
           >
             추가
           </button>
