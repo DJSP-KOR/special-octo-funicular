@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "뉴스 키워드 대시보드",
-  description: "네이버/로이터 뉴스를 키워드별로 분류해 보여주는 대시보드",
+  title: "SP의 주식 뉴스 키워드 대시보드",
+  description: "네이버 뉴스를 키워드별로 분류해 보여주는 대시보드",
 };
 
 export default function RootLayout({

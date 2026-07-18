@@ -174,7 +174,7 @@ export default function Home() {
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">뉴스 키워드 대시보드</h1>
+          <h1 className="text-2xl font-semibold">SP의 주식 뉴스 키워드 대시보드</h1>
           <p className="text-sm text-gray-500">
             네이버 뉴스를 키워드별로 분류합니다.
             {lastSyncedAt && (
