@@ -8,7 +8,22 @@ function isAuthorized(req: NextRequest): boolean {
   return auth === `Bearer ${secret}`;
 }
 
-export async function POST(req: NextRequest) {
+// Manual trigger from the dashboard's "업데이트" button. No auth required —
+// it's a same-site action anyone visiting the page can already take.
+export async function POST() {
+  try {
+    const result = await syncNews();
+    return NextResponse.json(result);
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "sync failed" },
+      { status: 500 }
+    );
+  }
+}
+
+// Vercel Cron calls this via GET with an auto-attached CRON_SECRET header.
+export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
@@ -22,9 +37,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// Vercel Cron only supports GET requests.
-export async function GET(req: NextRequest) {
-  return POST(req);
 }
