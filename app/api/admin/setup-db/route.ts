@@ -31,6 +31,7 @@ const STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS "_ArticleToKeyword_B_index" ON "_ArticleToKeyword"("B")`,
   `ALTER TABLE "_ArticleToKeyword" ADD CONSTRAINT "_ArticleToKeyword_A_fkey" FOREIGN KEY ("A") REFERENCES "Article"("id") ON DELETE CASCADE ON UPDATE CASCADE`,
   `ALTER TABLE "_ArticleToKeyword" ADD CONSTRAINT "_ArticleToKeyword_B_fkey" FOREIGN KEY ("B") REFERENCES "Keyword"("id") ON DELETE CASCADE ON UPDATE CASCADE`,
+  `ALTER TABLE "Keyword" ADD COLUMN IF NOT EXISTS "searchQuery" TEXT`,
 ];
 
 function isAuthorized(req: NextRequest): boolean {

@@ -16,10 +16,11 @@ enum Source {
 }
 
 model Keyword {
-  id        String    @id @default(cuid())
-  text      String    @unique
-  createdAt DateTime  @default(now())
-  articles  Article[]
+  id          String    @id @default(cuid())
+  text        String    @unique
+  searchQuery String?
+  createdAt   DateTime  @default(now())
+  articles    Article[]
 }
 
 model Article {

@@ -28,12 +28,13 @@ export async function syncNews(): Promise<SyncResult> {
     run: () => Promise<NormalizedArticle[]>;
   };
 
-  const fetchJobs = keywordTexts.flatMap((keyword: string): FetchJob[] => {
+  const fetchJobs = keywords.flatMap((kw: { text: string; searchQuery: string | null }): FetchJob[] => {
+    const query = kw.searchQuery ?? kw.text;
     const jobs: FetchJob[] = [
-      { keyword, source: "Naver", run: () => fetchNaverNews(keyword) },
+      { keyword: kw.text, source: "Naver", run: () => fetchNaverNews(query) },
     ];
-    if (!HANGUL_RE.test(keyword)) {
-      jobs.push({ keyword, source: "Reuters", run: () => fetchReutersNews(keyword) });
+    if (!HANGUL_RE.test(kw.text)) {
+      jobs.push({ keyword: kw.text, source: "Reuters", run: () => fetchReutersNews(query) });
     }
     return jobs;
   });

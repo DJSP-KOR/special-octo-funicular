@@ -9,6 +9,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const text = typeof body?.text === "string" ? body.text.trim() : "";
+  const searchQuery =
+    typeof body?.searchQuery === "string" && body.searchQuery.trim()
+      ? body.searchQuery.trim()
+      : undefined;
 
   if (!text) {
     return NextResponse.json({ error: "text is required" }, { status: 400 });
@@ -16,8 +20,8 @@ export async function POST(req: NextRequest) {
 
   const keyword = await prisma.keyword.upsert({
     where: { text },
-    create: { text },
-    update: {},
+    create: { text, searchQuery },
+    update: searchQuery ? { searchQuery } : {},
   });
 
   return NextResponse.json(keyword, { status: 201 });

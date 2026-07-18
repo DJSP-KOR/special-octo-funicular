@@ -28,6 +28,12 @@ const SOURCE_BADGE: Record<Article["source"], string> = {
   REUTERS: "bg-orange-100 text-orange-800",
 };
 
+const STOCK_SUGGESTIONS = [
+  { text: "삼성전자", searchQuery: "삼성전자 주가" },
+  { text: "SK하이닉스", searchQuery: "SK하이닉스 주가" },
+  { text: "마이크론", searchQuery: "마이크론 주가" },
+];
+
 export default function Home() {
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
@@ -37,6 +43,7 @@ export default function Home() {
   const [syncing, setSyncing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const loadKeywords = useCallback(async () => {
     const res = await fetch("/api/keywords");
@@ -105,6 +112,34 @@ export default function Home() {
         return;
       }
       await loadArticles(selectedKeyword);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleAddSuggested = async (suggestion: { text: string; searchQuery: string }) => {
+    setError(null);
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/keywords", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(suggestion),
+      });
+      if (!res.ok) {
+        setError("추천 키워드 추가에 실패했습니다.");
+        return;
+      }
+      await loadKeywords();
+      setSelectedKeyword(suggestion.text);
+
+      const syncRes = await fetch("/api/news/sync", { method: "POST" });
+      const syncData = await syncRes.json();
+      if (!syncRes.ok) {
+        setError(syncData.error ?? "업데이트에 실패했습니다.");
+        return;
+      }
+      await loadArticles(suggestion.text);
     } finally {
       setSyncing(false);
     }
@@ -185,6 +220,14 @@ export default function Home() {
           >
             전체
           </button>
+          <button
+            onClick={() => setShowSuggestions((v) => !v)}
+            className={`rounded-full px-3 py-1 text-sm ${
+              showSuggestions ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700"
+            }`}
+          >
+            TOP 3 {showSuggestions ? "▲" : "▼"}
+          </button>
           {keywords.map((kw) => (
             <span
               key={kw.id}
@@ -203,6 +246,24 @@ export default function Home() {
             </span>
           ))}
         </div>
+
+        {showSuggestions && (
+          <div className="flex flex-wrap gap-2 rounded-md bg-blue-50 p-3">
+            <span className="w-full text-xs text-blue-700">
+              추천 종목 키워드 — 클릭하면 바로 추가되고 최신 주식 관련 뉴스를 검색합니다
+            </span>
+            {STOCK_SUGGESTIONS.map((s) => (
+              <button
+                key={s.text}
+                onClick={() => handleAddSuggested(s)}
+                disabled={syncing}
+                className="rounded-full bg-white px-3 py-1 text-sm text-blue-700 shadow-sm hover:bg-blue-100 disabled:opacity-50"
+              >
+                #{s.text}
+              </button>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="flex flex-col gap-6">
