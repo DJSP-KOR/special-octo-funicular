@@ -11,6 +11,8 @@ export interface SyncResult {
   errors: string[];
 }
 
+const HANGUL_RE = /[가-힣]/;
+
 export async function syncNews(): Promise<SyncResult> {
   const keywords = await prisma.keyword.findMany();
   const keywordTexts = keywords.map((k: { text: string }) => k.text);
@@ -18,10 +20,23 @@ export async function syncNews(): Promise<SyncResult> {
   const errors: string[] = [];
   const fetchedArticles = new Map<string, NormalizedArticle>();
 
-  const fetchJobs = keywordTexts.flatMap((keyword: string) => [
-    { keyword, source: "Naver" as const, run: () => fetchNaverNews(keyword) },
-    { keyword, source: "Reuters" as const, run: () => fetchReutersNews(keyword) },
-  ]);
+  // Reuters/NewsAPI only has English content, so a Korean keyword can never
+  // match — skip that call entirely to cut request count and sync time.
+  type FetchJob = {
+    keyword: string;
+    source: "Naver" | "Reuters";
+    run: () => Promise<NormalizedArticle[]>;
+  };
+
+  const fetchJobs = keywordTexts.flatMap((keyword: string): FetchJob[] => {
+    const jobs: FetchJob[] = [
+      { keyword, source: "Naver", run: () => fetchNaverNews(keyword) },
+    ];
+    if (!HANGUL_RE.test(keyword)) {
+      jobs.push({ keyword, source: "Reuters", run: () => fetchReutersNews(keyword) });
+    }
+    return jobs;
+  });
 
   const results = await Promise.allSettled(fetchJobs.map((job) => job.run()));
 

@@ -122,6 +122,19 @@ export default function Home() {
     return map;
   }, [articles]);
 
+  const ARTICLES_PER_KEYWORD_IN_OVERVIEW = 3;
+
+  const overviewArticles = useMemo(() => {
+    const seen = new Map<string, Article>();
+    for (const kw of keywords) {
+      const top = (grouped.get(kw.text) ?? []).slice(0, ARTICLES_PER_KEYWORD_IN_OVERVIEW);
+      for (const article of top) seen.set(article.id, article);
+    }
+    return [...seen.values()].sort(
+      (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    );
+  }, [grouped, keywords]);
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -204,7 +217,7 @@ export default function Home() {
         )}
 
         {!loading && !selectedKeyword && keywords.length > 0 && (
-          <ArticleList articles={articles} showKeywordBadges />
+          <ArticleList articles={overviewArticles} showKeywordBadges />
         )}
       </section>
     </main>
