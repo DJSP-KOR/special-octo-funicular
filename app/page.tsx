@@ -285,6 +285,29 @@ export default function Home() {
   );
 }
 
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function highlightText(text: string, keywordTexts: string[]): React.ReactNode {
+  const terms = keywordTexts.map(escapeRegExp).filter(Boolean);
+  if (terms.length === 0) return text;
+
+  const regex = new RegExp(`(${terms.join("|")})`, "gi");
+  const parts = text.split(regex);
+
+  // With one capture group, String.split alternates [text, match, text, match, ...].
+  return parts.map((part, i) =>
+    i % 2 === 1 ? (
+      <mark key={i} className="rounded bg-yellow-200 px-0.5 text-gray-900">
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
+}
+
 function ArticleList({
   articles,
   showKeywordBadges = false,
@@ -298,40 +321,45 @@ function ArticleList({
 
   return (
     <ul className="flex flex-col divide-y divide-gray-100 rounded-md border border-gray-100">
-      {articles.map((article) => (
-        <li key={article.id} className="flex flex-col gap-1 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span
-              className={`rounded px-2 py-0.5 text-xs font-medium ${SOURCE_BADGE[article.source]}`}
+      {articles.map((article) => {
+        const keywordTexts = article.keywords.map((kw) => kw.text);
+        return (
+          <li key={article.id} className="flex flex-col gap-1 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <span
+                className={`rounded px-2 py-0.5 text-xs font-medium ${SOURCE_BADGE[article.source]}`}
+              >
+                {SOURCE_LABEL[article.source]}
+              </span>
+              <span className="text-xs text-gray-400">
+                {new Date(article.publishedAt).toLocaleString("ko-KR")}
+              </span>
+              {showKeywordBadges &&
+                article.keywords.map((kw) => (
+                  <span
+                    key={kw.id}
+                    className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700"
+                  >
+                    {kw.text}
+                  </span>
+                ))}
+            </div>
+            <a
+              href={article.url}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-gray-900 hover:underline"
             >
-              {SOURCE_LABEL[article.source]}
-            </span>
-            <span className="text-xs text-gray-400">
-              {new Date(article.publishedAt).toLocaleString("ko-KR")}
-            </span>
-            {showKeywordBadges &&
-              article.keywords.map((kw) => (
-                <span
-                  key={kw.id}
-                  className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600"
-                >
-                  {kw.text}
-                </span>
-              ))}
-          </div>
-          <a
-            href={article.url}
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium text-gray-900 hover:underline"
-          >
-            {article.title}
-          </a>
-          {article.description && (
-            <p className="line-clamp-2 text-sm text-gray-500">{article.description}</p>
-          )}
-        </li>
-      ))}
+              {highlightText(article.title, keywordTexts)}
+            </a>
+            {article.description && (
+              <p className="line-clamp-2 text-sm text-gray-500">
+                {highlightText(article.description, keywordTexts)}
+              </p>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
