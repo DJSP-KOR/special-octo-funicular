@@ -172,23 +172,21 @@ export default function Home() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">SP의 주식 뉴스 키워드 대시보드</h1>
-          <p className="text-sm text-gray-500">
-            네이버 뉴스를 키워드별로 분류합니다.
-            {lastSyncedAt && (
-              <> 마지막 업데이트: {new Date(lastSyncedAt).toLocaleString("ko-KR")}</>
-            )}
-          </p>
-        </div>
+      <header className="relative flex flex-col items-center gap-1 text-center">
         <button
           onClick={handleSync}
           disabled={syncing}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="absolute right-0 top-0 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
           {syncing ? "업데이트 중..." : "업데이트"}
         </button>
+        <h1 className="text-2xl font-semibold">SP의 주식 뉴스 키워드 대시보드</h1>
+        <p className="text-sm text-gray-500">
+          네이버 뉴스를 키워드별로 분류합니다.
+          {lastSyncedAt && (
+            <> 마지막 업데이트: {new Date(lastSyncedAt).toLocaleString("ko-KR")}</>
+          )}
+        </p>
       </header>
 
       {error && (
@@ -283,10 +281,10 @@ export default function Home() {
       </section>
 
       <section className="flex flex-col gap-6">
-        {loading && <p className="text-sm text-gray-500">불러오는 중...</p>}
+        {loading && <p className="text-center text-sm text-gray-500">불러오는 중...</p>}
 
         {!loading && keywords.length === 0 && (
-          <p className="text-sm text-gray-500">먼저 키워드를 추가해 주세요.</p>
+          <p className="text-center text-sm text-gray-500">먼저 키워드를 추가해 주세요.</p>
         )}
 
         {!loading && selectedKeyword && (
@@ -332,7 +330,7 @@ function ArticleList({
   showKeywordBadges?: boolean;
 }) {
   if (articles.length === 0) {
-    return <p className="text-sm text-gray-400">아직 수집된 기사가 없습니다.</p>;
+    return <p className="text-center text-sm text-gray-400">아직 수집된 기사가 없습니다.</p>;
   }
 
   return (
