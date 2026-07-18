@@ -1,11 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getOwnerId, withOwnerCookie } from "@/lib/owner";
 
 export async function DELETE(
-  _req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { ownerId, isNew } = getOwnerId(req);
   const { id } = await params;
-  await prisma.keyword.delete({ where: { id } });
-  return NextResponse.json({ ok: true });
+
+  // deleteMany scoped to ownerId so a request can never delete a keyword it
+  // doesn't own, even if it somehow knows another owner's keyword id.
+  await prisma.keyword.deleteMany({ where: { id, ownerId } });
+
+  return withOwnerCookie(NextResponse.json({ ok: true }), ownerId, isNew);
 }

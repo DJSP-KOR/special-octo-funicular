@@ -176,7 +176,7 @@ export default function Home() {
         <div>
           <h1 className="text-2xl font-semibold">뉴스 키워드 대시보드</h1>
           <p className="text-sm text-gray-500">
-            네이버 뉴스 · 로이터 뉴스를 키워드별로 분류합니다.
+            네이버 뉴스를 키워드별로 분류합니다.
             {lastSyncedAt && (
               <> 마지막 업데이트: {new Date(lastSyncedAt).toLocaleString("ko-KR")}</>
             )}

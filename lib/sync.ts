@@ -1,6 +1,5 @@
 import { prisma } from "./prisma";
 import { fetchNaverNews } from "./naver";
-import { fetchReutersNews } from "./newsapi";
 import { matchKeywords } from "./classify";
 import type { NormalizedArticle } from "./types";
 
@@ -11,51 +10,45 @@ export interface SyncResult {
   errors: string[];
 }
 
-const HANGUL_RE = /[가-힣]/;
-
 export async function syncNews(): Promise<SyncResult> {
   const keywords = await prisma.keyword.findMany();
-  const keywordTexts = keywords.map((k: { text: string }) => k.text);
+
+  // Multiple owners can track the same text — dedupe the actual network
+  // fetch by text, but keep every owner's Keyword row so the article gets
+  // connected to all of them.
+  const idsByText = new Map<string, string[]>();
+  const queryByText = new Map<string, string>();
+  for (const kw of keywords) {
+    idsByText.set(kw.text, [...(idsByText.get(kw.text) ?? []), kw.id]);
+    if (!queryByText.has(kw.text)) queryByText.set(kw.text, kw.searchQuery ?? kw.text);
+  }
+  const uniqueTexts = [...idsByText.keys()];
 
   const errors: string[] = [];
   const fetchedArticles = new Map<string, NormalizedArticle>();
 
-  // Reuters/NewsAPI only has English content, so a Korean keyword can never
-  // match — skip that call entirely to cut request count and sync time.
-  type FetchJob = {
-    keyword: string;
-    source: "Naver" | "Reuters";
-    run: () => Promise<NormalizedArticle[]>;
-  };
-
-  const fetchJobs = keywords.flatMap((kw: { text: string; searchQuery: string | null }): FetchJob[] => {
-    const query = kw.searchQuery ?? kw.text;
-    const jobs: FetchJob[] = [
-      { keyword: kw.text, source: "Naver", run: () => fetchNaverNews(query) },
-    ];
-    if (!HANGUL_RE.test(kw.text)) {
-      jobs.push({ keyword: kw.text, source: "Reuters", run: () => fetchReutersNews(query) });
-    }
-    return jobs;
-  });
-
-  const results = await Promise.allSettled(fetchJobs.map((job) => job.run()));
+  const results = await Promise.allSettled(
+    uniqueTexts.map((text) => fetchNaverNews(queryByText.get(text)!))
+  );
 
   results.forEach((result, i) => {
-    const { keyword, source } = fetchJobs[i];
+    const text = uniqueTexts[i];
     if (result.status === "fulfilled") {
       for (const article of result.value) fetchedArticles.set(article.url, article);
     } else {
-      errors.push(`${source}(${keyword}): ${result.reason}`);
+      errors.push(`Naver(${text}): ${result.reason}`);
     }
   });
 
   const toSave = [...fetchedArticles.values()]
-    .map((article) => ({ article, matched: matchKeywords(article, keywordTexts) }))
-    .filter(({ matched }) => matched.length > 0);
+    .map((article) => ({
+      article,
+      matchedIds: matchKeywords(article, uniqueTexts).flatMap((text) => idsByText.get(text) ?? []),
+    }))
+    .filter(({ matchedIds }) => matchedIds.length > 0);
 
   await Promise.all(
-    toSave.map(({ article, matched }) =>
+    toSave.map(({ article, matchedIds }) =>
       prisma.article.upsert({
         where: { url: article.url },
         create: {
@@ -64,12 +57,12 @@ export async function syncNews(): Promise<SyncResult> {
           url: article.url,
           description: article.description,
           publishedAt: article.publishedAt,
-          keywords: { connect: matched.map((text) => ({ text })) },
+          keywords: { connect: matchedIds.map((id) => ({ id })) },
         },
         update: {
           title: article.title,
           description: article.description,
-          keywords: { connect: matched.map((text) => ({ text })) },
+          keywords: { connect: matchedIds.map((id) => ({ id })) },
         },
       })
     )
@@ -78,7 +71,7 @@ export async function syncNews(): Promise<SyncResult> {
   const saved = toSave.length;
 
   return {
-    keywordCount: keywordTexts.length,
+    keywordCount: keywords.length,
     fetched: fetchedArticles.size,
     saved,
     errors,

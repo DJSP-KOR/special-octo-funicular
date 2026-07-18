@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getOwnerId, withOwnerCookie } from "@/lib/owner";
 
-export async function GET() {
-  const keywords = await prisma.keyword.findMany({ orderBy: { createdAt: "asc" } });
-  return NextResponse.json(keywords);
+export async function GET(req: NextRequest) {
+  const { ownerId, isNew } = getOwnerId(req);
+  const keywords = isNew
+    ? []
+    : await prisma.keyword.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } });
+  return withOwnerCookie(NextResponse.json(keywords), ownerId, isNew);
 }
 
 export async function POST(req: NextRequest) {
+  const { ownerId, isNew } = getOwnerId(req);
   const body = await req.json().catch(() => null);
   const text = typeof body?.text === "string" ? body.text.trim() : "";
   const searchQuery =
@@ -15,14 +20,18 @@ export async function POST(req: NextRequest) {
       : undefined;
 
   if (!text) {
-    return NextResponse.json({ error: "text is required" }, { status: 400 });
+    return withOwnerCookie(
+      NextResponse.json({ error: "text is required" }, { status: 400 }),
+      ownerId,
+      isNew
+    );
   }
 
   const keyword = await prisma.keyword.upsert({
-    where: { text },
-    create: { text, searchQuery },
+    where: { ownerId_text: { ownerId, text } },
+    create: { ownerId, text, searchQuery },
     update: searchQuery ? { searchQuery } : {},
   });
 
-  return NextResponse.json(keyword, { status: 201 });
+  return withOwnerCookie(NextResponse.json(keyword, { status: 201 }), ownerId, isNew);
 }

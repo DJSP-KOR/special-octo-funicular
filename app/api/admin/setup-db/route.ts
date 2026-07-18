@@ -32,6 +32,11 @@ const STATEMENTS = [
   `ALTER TABLE "_ArticleToKeyword" ADD CONSTRAINT "_ArticleToKeyword_A_fkey" FOREIGN KEY ("A") REFERENCES "Article"("id") ON DELETE CASCADE ON UPDATE CASCADE`,
   `ALTER TABLE "_ArticleToKeyword" ADD CONSTRAINT "_ArticleToKeyword_B_fkey" FOREIGN KEY ("B") REFERENCES "Keyword"("id") ON DELETE CASCADE ON UPDATE CASCADE`,
   `ALTER TABLE "Keyword" ADD COLUMN IF NOT EXISTS "searchQuery" TEXT`,
+  `ALTER TABLE "Keyword" ADD COLUMN IF NOT EXISTS "ownerId" TEXT`,
+  `UPDATE "Keyword" SET "ownerId" = 'legacy' WHERE "ownerId" IS NULL`,
+  `ALTER TABLE "Keyword" ALTER COLUMN "ownerId" SET NOT NULL`,
+  `DROP INDEX IF EXISTS "Keyword_text_key"`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "Keyword_ownerId_text_key" ON "Keyword"("ownerId", "text")`,
 ];
 
 function isAuthorized(req: NextRequest): boolean {
