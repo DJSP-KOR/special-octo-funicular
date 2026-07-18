@@ -203,28 +203,28 @@ export default function Home() {
           <ArticleList articles={grouped.get(selectedKeyword) ?? []} />
         )}
 
-        {!loading && !selectedKeyword &&
-          keywords.map((kw) => (
-            <div key={kw.id} className="flex flex-col gap-2">
-              <h2 className="text-lg font-medium">{kw.text}</h2>
-              <ArticleList articles={grouped.get(kw.text) ?? []} compact />
-            </div>
-          ))}
+        {!loading && !selectedKeyword && keywords.length > 0 && (
+          <ArticleList articles={articles} showKeywordBadges />
+        )}
       </section>
     </main>
   );
 }
 
-function ArticleList({ articles, compact = false }: { articles: Article[]; compact?: boolean }) {
+function ArticleList({
+  articles,
+  showKeywordBadges = false,
+}: {
+  articles: Article[];
+  showKeywordBadges?: boolean;
+}) {
   if (articles.length === 0) {
     return <p className="text-sm text-gray-400">아직 수집된 기사가 없습니다.</p>;
   }
 
-  const list = compact ? articles.slice(0, 5) : articles;
-
   return (
     <ul className="flex flex-col divide-y divide-gray-100 rounded-md border border-gray-100">
-      {list.map((article) => (
+      {articles.map((article) => (
         <li key={article.id} className="flex flex-col gap-1 px-4 py-3">
           <div className="flex items-center gap-2">
             <span
@@ -235,6 +235,15 @@ function ArticleList({ articles, compact = false }: { articles: Article[]; compa
             <span className="text-xs text-gray-400">
               {new Date(article.publishedAt).toLocaleString("ko-KR")}
             </span>
+            {showKeywordBadges &&
+              article.keywords.map((kw) => (
+                <span
+                  key={kw.id}
+                  className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600"
+                >
+                  {kw.text}
+                </span>
+              ))}
           </div>
           <a
             href={article.url}
